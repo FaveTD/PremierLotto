@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -57,5 +57,24 @@ namespace PremierLotto
                 p.CorrectMatches += matches; 
             }
         }
+        public void HandlePotentialTies(List<Player> sortedResults, GameSettings settings)
+        {
+            if (settings.HasRollup)
+            {
+                var tied = GetTiedWinners(sortedResults);
+                if (tied.Count > 1)
+                {
+                    "🚨 TIE DETECTED! INITIATING ROLLUP PROTOCOL...".WriteColored(ConsoleColor.Red);
+                    Thread.Sleep(2000);
+
+                    RunTieBreaker(tied, new InputHandler(), new Validation(), settings, new MatchCheck());
+
+                    "--- FINAL STANDINGS AFTER SUDDEN DEATH ---".WriteCentered(ConsoleColor.Yellow);
+                    var finalResults = GetSortedLeaderboard(sortedResults);
+                    DisplayTable(finalResults);
+                }
+            }
+        }
+
     }
 }
