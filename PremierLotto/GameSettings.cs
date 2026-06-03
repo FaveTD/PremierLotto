@@ -1,13 +1,27 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PremierLotto
 {
-    public enum RiskLevel
+    public class GameOption
     {
-        Easy = 1,
-        Classic = 2,
-        Pro = 3
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int MaxNumber { get; set; }
+        public int NumberOfRounds { get; set; }
+        public bool HasRollup { get; set; }
+        public decimal Multiplier { get; set; }
+
+        public GameOption(int id, string name, int max, int rounds, bool rollup, decimal mult)
+        {
+            Id = id;
+            Name = name;
+            MaxNumber = max;
+            NumberOfRounds = rounds;
+            HasRollup = rollup;
+            Multiplier = mult;
+        }
     }
 
     public class GameSettings
@@ -17,41 +31,54 @@ namespace PremierLotto
         public bool AllowDuplicates { get; private set; }
         public bool HasRollup { get; private set; }
         public bool IsAlphanumeric { get; private set; }
-        public RiskLevel Level { get; private set; }
+        public string ModeName { get; private set; }
+        public decimal Multiplier { get; private set; } 
 
-        public GameSettings(RiskLevel level, bool useDuplicates, bool useAlphanumeric)
+        public static List<GameOption> AvailableGames = new List<GameOption>
         {
-            Level = level;
+            new GameOption(1, "Easy", 30, 5, false, 1.5m),
+            new GameOption(2, "Classic", 60, 3, true, 3.0m),
+            new GameOption(3, "Pro", 90, 1, true, 10.0m)
+        };
+
+        public GameSettings(GameOption selectedOption, bool useDuplicates, bool useAlphanumeric)
+        {
+            ModeName = selectedOption.Name;
+            MaxNumber = selectedOption.MaxNumber;
+            NumberOfRounds = selectedOption.NumberOfRounds;
+            HasRollup = selectedOption.HasRollup;
+            Multiplier = selectedOption.Multiplier;
+
             AllowDuplicates = useDuplicates;
             IsAlphanumeric = useAlphanumeric;
 
-            switch (level)
-            {
-                case RiskLevel.Easy:
-                    MaxNumber = 30;
-                    NumberOfRounds = 5;
-                    HasRollup = false;
-                    break;
-
-                case RiskLevel.Classic:
-                    MaxNumber = 60;
-                    NumberOfRounds = 3;
-                    HasRollup = true;
-                    break;
-
-                case RiskLevel.Pro:
-                    MaxNumber = 90;
-                    NumberOfRounds = 1;
-                    HasRollup = true;
-                    break;
-            }
-
-           
             string duplicateStatus = AllowDuplicates ? "Duplicates Enabled" : "Unique Numbers Only";
             string typeStatus = IsAlphanumeric ? "Alphanumeric" : "Numeric Only";
 
-            Console.WriteLine($"\n--- Configuration: {Level} Mode ---");
-            Console.WriteLine($"[{typeStatus}] | [{duplicateStatus}] | [{NumberOfRounds} Rounds]");
+            Console.WriteLine($"\n--- Configuration: {ModeName} Mode ---");
+            Console.WriteLine($"[{typeStatus}] | [{duplicateStatus}] | [{NumberOfRounds} Rounds] | [{Multiplier}x Multiplier]");
+        }
+
+        public static GameOption ShowMenuAndSelect()
+        {
+            while (true)
+            {
+                Console.WriteLine("\nSelect Risk Level:");
+                foreach (var game in AvailableGames)
+                {
+                    Console.WriteLine($"{game.Id}. {game.Name} ({game.Multiplier}x Multiplier)");
+                }
+
+                if (int.TryParse(Console.ReadLine(), out int choice))
+                {
+                    var selected = AvailableGames.FirstOrDefault(g => g.Id == choice);
+                    if (selected != null) return selected;
+                }
+
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid Selection. Try again.");
+                Console.ResetColor();
+            }
         }
     }
 }
