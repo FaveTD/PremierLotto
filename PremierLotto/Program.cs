@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -23,20 +23,12 @@ namespace PremierLotto
             "Access Granted. Initializing System...".AnimatedWrite(40);
             Thread.Sleep(1000);
 
-            Console.WriteLine("\nSelect Risk Level:");
-            Console.WriteLine("1. Easy (1.5x Multiplier) | 2. Classic (3.0x Multiplier) | 3. Pro (10.0x Multiplier)");
-
-            if (!int.TryParse(Console.ReadLine(), out int numericChoice) || !Enum.IsDefined(typeof(RiskLevel), numericChoice))
-            {
-                "Invalid Protocol Choice. System Restart Required.".WriteColored(ConsoleColor.Red);
-                return;
-            }
-            RiskLevel selectedLevel = (RiskLevel)numericChoice;
+            GameOption selectedOption = GameSettings.ShowMenuAndSelect();
 
             Console.Write("\nEnter your Stake/Investment per round (e.g., 500): ₦");
             if (!decimal.TryParse(Console.ReadLine(), out decimal userStake))
             {
-                userStake = 100; 
+                userStake = 100;
                 "Invalid amount. Defaulting to ₦100.".WriteColored(ConsoleColor.Gray);
             }
 
@@ -44,13 +36,14 @@ namespace PremierLotto
             bool allowDupes = Console.ReadLine()?.ToUpper() == "Y";
 
             bool allowAlpha = false;
-            if (selectedLevel == RiskLevel.Pro)
+
+            if (selectedOption.Name == "Pro")
             {
                 Console.Write("Activate Alphanumeric Mode (A1, B2...)? (Y/N): ");
                 allowAlpha = Console.ReadLine()?.ToUpper() == "Y";
             }
 
-            GameSettings settings = new GameSettings(selectedLevel, allowDupes, allowAlpha);
+            GameSettings settings = new GameSettings(selectedOption, allowDupes, allowAlpha);
             Validation validator = new Validation();
             InputHandler inputSec = new InputHandler();
             MatchCheck checker = new MatchCheck();
@@ -102,7 +95,7 @@ namespace PremierLotto
                 {
                     int matches = checker.GetMatchCount(player.Guesses, draw.WinningNumbers);
 
-                    decimal roundWinnings = calculator.CalculateWinnings(matches, settings.Level, userStake);
+                    decimal roundWinnings = calculator.CalculateWinnings(matches, settings, userStake);
 
                     player.CorrectMatches += matches;
                     player.TotalWinnings += roundWinnings;
