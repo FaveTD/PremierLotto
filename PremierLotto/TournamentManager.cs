@@ -18,4 +18,38 @@ public static class TournamentManager
             Console.WriteLine($"Agent {player.PlayerAlias}: {matches} Matches | Round Payout: ₦{roundWinnings}");
         }
     }
+    public static void RunTournament(List<Player> players, GameSettings settings, decimal stake)
+    {
+        InputHandler inputSec = new InputHandler();
+        Validation validator = new Validation();
+
+        for (int r = 1; r <= settings.NumberOfRounds; r++)
+        {
+            Console.Clear();
+            "=======================================".WriteCentered(ConsoleColor.Cyan);
+            $"       TOURNAMENT ROUND {r} OF {settings.NumberOfRounds}".WriteCentered(ConsoleColor.Cyan);
+            "=======================================".WriteCentered(ConsoleColor.Cyan);
+
+            foreach (var player in players)
+            {
+                Console.WriteLine($"\nAgent [{player.PlayerAlias.ToUpper()}], prepare your guesses.");
+                player.Guesses = inputSec.GetConfirmedGuesses(validator, settings);
+            }
+
+            LottoEngine draw = new LottoEngine(settings);
+            "SHUFFLING DIGITAL DRUM...".AnimatedWrite(60);
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"\nWINNING COMBINATION: [ {string.Join(" | ", draw.WinningNumbers)} ]");
+            Console.ResetColor();
+
+            ProcessPlayerResults(players, draw.WinningNumbers, settings, stake);
+
+            if (r < settings.NumberOfRounds)
+            {
+                Console.WriteLine("\nRound Complete. Press any key to proceed...");
+                Console.ReadKey();
+            }
+        }
+    }
 }
