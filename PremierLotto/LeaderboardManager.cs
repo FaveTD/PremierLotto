@@ -6,6 +6,7 @@ namespace PremierLotto
 {
     public class LeaderboardManager
     {
+
         public List<Player> GetSortedLeaderboard(List<Player> players)
         {
             return players.OrderByDescending(p => p.CorrectMatches)
@@ -59,21 +60,39 @@ namespace PremierLotto
         }
         public void HandlePotentialTies(List<Player> sortedResults, GameSettings settings)
         {
-            if (settings.HasRollup)
+            if (!settings.HasRollup)
             {
-                var tied = GetTiedWinners(sortedResults);
-                if (tied.Count > 1)
-                {
-                    "🚨 TIE DETECTED! INITIATING ROLLUP PROTOCOL...".WriteColored(ConsoleColor.Red);
-                    Thread.Sleep(2000);
-
-                    RunTieBreaker(tied, new InputHandler(), new Validation(), settings, new MatchCheck());
-
-                    "--- FINAL STANDINGS AFTER SUDDEN DEATH ---".WriteCentered(ConsoleColor.Yellow);
-                    var finalResults = GetSortedLeaderboard(sortedResults);
-                    DisplayTable(finalResults);
-                }
+                Console.WriteLine("\nRollup protocol is not supported for this game mode. Standings are final.");
+                return;
             }
+
+            var tied = GetTiedWinners(sortedResults);
+            if (tied.Count > 1)
+            {
+                "🚨 TIE DETECTED! INITIATING ROLLUP PROTOCOL...".WriteColored(ConsoleColor.Red);
+                Thread.Sleep(2000);
+
+                RunTieBreaker(tied, new InputHandler(), new Validation(), settings, new MatchCheck());
+
+                "--- FINAL STANDINGS AFTER SUDDEN DEATH ---".WriteCentered(ConsoleColor.Yellow);
+                var finalResults = GetSortedLeaderboard(sortedResults);
+                DisplayTable(finalResults);
+            }
+        }
+        public void DisplayFinalResults(List<Player> players, GameSettings settings)
+        {
+            Console.Clear();
+            "*************************************************".WriteCentered(ConsoleColor.Green);
+            "           FINAL MISSION DEBRIEF                ".WriteCentered(ConsoleColor.Green);
+            "*************************************************".WriteCentered(ConsoleColor.Green);
+
+            var sortedResults = GetSortedLeaderboard(players);
+            DisplayTable(sortedResults);
+
+            HandlePotentialTies(sortedResults, settings);
+
+            "SESSION COMPLETE. LOGGING OUT.".WriteCentered(ConsoleColor.Yellow);
+            Thread.Sleep(2000);
         }
 
     }
