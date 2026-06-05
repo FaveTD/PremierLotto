@@ -1,4 +1,5 @@
 using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -80,5 +81,25 @@ namespace PremierLotto
                 Console.ResetColor();
             }
         }
+        public static bool GetDuplicatePreference()
+        {
+            Console.Write("\nEnable Duplicate Numbers in Guesses? (Y/N): ");
+            return Console.ReadLine()?.ToUpper() == "Y";
+        }
+        public static bool GetAlphanumericPreference(GameOption selectedOption)
+        {
+            bool allowAlpha = false;
+
+            if (selectedOption.Name == "Pro")
+            {
+                Console.Write("Activate Alphanumeric Mode (A1, B2...)? (Y/N): ");
+                allowAlpha = Console.ReadLine()?.ToUpper() == "Y";
+            }
+
+            return allowAlpha;
+        }
     }
+
 }
+
+
