@@ -36,5 +36,19 @@ namespace PremierLotto
                 playersList.Add(new Player(real, alias));
             }
         }
+        public static bool VerifyAgentAccess()
+        {
+            Console.WriteLine("\nAgent, enter your age to access the terminal:");
+    
+            int age;
+            if (!Console.ReadLine().IsValidAge(out age)) 
+            {
+                return false; 
+            }
+
+            "Access Granted. Initializing System...".AnimatedWrite(40);
+             Thread.Sleep(1000);
+             return true; 
+        }
     }
 }
