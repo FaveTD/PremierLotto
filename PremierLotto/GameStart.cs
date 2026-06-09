@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace PremierLotto
 {
@@ -16,7 +17,7 @@ namespace PremierLotto
             return stake;
         }
 
-        public static void RegisterAgents(Validation validator, List<Player> playersList)
+        public static void RegisterAgents(Validation validator, List<Player> playersList, ProfileDataManager dataManager)
         {
             int totalPlayers;
             while (true)
@@ -29,26 +30,41 @@ namespace PremierLotto
             for (int i = 1; i <= totalPlayers; i++)
             {
                 Console.WriteLine($"\n--- Registering Agent {i} ---");
-                Console.Write("Legal Name: ");
-                string real = Console.ReadLine();
+
                 Console.Write("Operation Alias: ");
                 string alias = Console.ReadLine();
-                playersList.Add(new Player(real, alias));
+
+                PlayerProfile profile = dataManager.GetOrCreateProfile(alias);
+
+                if (string.IsNullOrEmpty(profile.LegalName))
+                {
+                    Console.Write("New Agent Profile Detected! Enter your Legal Name: ");
+                    string realName = Console.ReadLine();
+                    profile.LegalName = realName;
+                }
+                else
+                {
+                    $"Authenticated as: {profile.LegalName}".WriteColored(ConsoleColor.DarkGray);
+                }
+
+                // FIX: Matches perfectly with your Player(realName, alias) constructor requirements
+                playersList.Add(new Player(profile.LegalName, profile.DisplayName));
             }
         }
+
         public static bool VerifyAgentAccess()
         {
             Console.WriteLine("\nAgent, enter your age to access the terminal:");
-    
+
             int age;
-            if (!Console.ReadLine().IsValidAge(out age)) 
+            if (!Console.ReadLine().IsValidAge(out age))
             {
-                return false; 
+                return false;
             }
 
             "Access Granted. Initializing System...".AnimatedWrite(40);
-             Thread.Sleep(1000);
-             return true; 
+            Thread.Sleep(1000);
+            return true;
         }
     }
 }
