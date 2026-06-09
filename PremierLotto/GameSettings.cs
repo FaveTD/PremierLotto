@@ -76,9 +76,8 @@ namespace PremierLotto
                     if (selected != null) return selected;
                 }
 
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Invalid Selection. Try again.");
-                Console.ResetColor();
+                ("Invalid Selection. Try again.").WriteColored(ConsoleColor.Red);
+               
             }
         }
         public static bool GetDuplicatePreference()
