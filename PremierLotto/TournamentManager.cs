@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using PremierLotto;
 
 public static class TournamentManager
@@ -7,6 +9,13 @@ public static class TournamentManager
         var checker = new MatchCheck();
         var calculator = new PayoutCalculator();
 
+        int highestMatchesThisRound = -1;
+
+        foreach (var p in players)
+        {
+            p.IsWinnerOfRound = false;
+        }
+
         foreach (var player in players)
         {
             int matches = checker.GetMatchCount(player.Guesses, winningNumbers);
@@ -15,9 +24,23 @@ public static class TournamentManager
             player.CorrectMatches += matches;
             player.TotalWinnings += roundWinnings;
 
+            if (matches > highestMatchesThisRound)
+            {
+                highestMatchesThisRound = matches;
+            }
+
             Console.WriteLine($"Agent {player.PlayerAlias}: {matches} Matches | Round Payout: ₦{roundWinnings}");
         }
+
+        foreach (var player in players)
+        {
+            if (player.CorrectMatches == highestMatchesThisRound && highestMatchesThisRound > 0)
+            {
+                player.IsWinnerOfRound = true;
+            }
+        }
     }
+
     public static void RunTournament(List<Player> players, GameSettings settings, decimal stake)
     {
         InputHandler inputSec = new InputHandler();
@@ -44,6 +67,9 @@ public static class TournamentManager
             Console.ResetColor();
 
             ProcessPlayerResults(players, draw.WinningNumbers, settings, stake);
+
+            HistoryManager historyLogger = new HistoryManager();
+            historyLogger.AppendRoundLog(settings.ModeName, draw.WinningNumbers, players);
 
             if (r < settings.NumberOfRounds)
             {
