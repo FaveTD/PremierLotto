@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace PremierLotto
@@ -12,6 +12,8 @@ namespace PremierLotto
 
         public int CorrectMatches { get; set; }
         public decimal TotalWinnings { get; set; }
+        
+        public bool IsWinnerOfRound { get; set; }
 
         public Player(string realName, string alias)
         {
@@ -20,6 +22,7 @@ namespace PremierLotto
             Guesses = new List<string>();
             CorrectMatches = 0;
             TotalWinnings = 0;
+            IsWinnerOfRound = false; 
         }
     }
 }
