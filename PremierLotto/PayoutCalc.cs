@@ -1,18 +1,47 @@
+using PremierLotto.Models;
+using PremierLotto.Utilities;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace PremierLotto
+namespace PremierLotto.FInance
 {
-    public class PayoutCalculator
+    public class PayoutCalc
     {
-        public decimal CalculateWinnings(int matches, GameSettings settings, decimal stake)
+        public static void DistributeEasyPool(List<Player> winners, List<Player> activePlayers, decimal totalJackpotPool)
         {
-            decimal multiplier = settings.Multiplier;
+            Console.WriteLine("--- DISTRIBUTING JACKPOT (PROPORTIONAL SPLIT) ---");
 
-            decimal accuracyPercentage = matches / 4.0m;
+            decimal sumOfWinningStakes = winners.Sum(p => p.ActiveRoundStake);
 
-            decimal finalPayout = stake * multiplier * accuracyPercentage;
+            foreach (var winner in winners)
+            {
+                decimal proportionalShare = totalJackpotPool * (winner.ActiveRoundStake / sumOfWinningStakes);
+                proportionalShare = Math.Round(proportionalShare, 2);
 
-            return Math.Round(finalPayout, 2);
+                winner.TotalWinnings = proportionalShare;
+
+                Console.WriteLine($"Agent {winner.PlayerAlias} won a share of ₦{proportionalShare:N2}!");
+
+                winner.Wallet.DepositWinnings(proportionalShare);
+            }
+        }
+
+        public static void AwardSingleJackpot(Player champion, decimal totalJackpotPool)
+        {
+            Console.WriteLine("--- AWARDING JACKPOT TO CHAMPION ---");
+
+            champion.TotalWinnings = totalJackpotPool;
+
+            $"🏆 Champion Agent {champion.PlayerAlias} claims the entire pool of ₦{totalJackpotPool:N2}!".WriteColored(ConsoleColor.Green);
+
+            champion.Wallet.DepositWinnings(totalJackpotPool);
+        }
+
+        public decimal CalculateAccuracyWeight(int matches)
+        {
+            if (matches <= 0) return 0.00m;
+            return matches / 4.0m;
         }
     }
 }
