@@ -1,9 +1,9 @@
-using System;
+using PremierLotto.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PremierLotto
+namespace PremierLotto.Core
 {
     public class GameOption
     {
@@ -12,16 +12,14 @@ namespace PremierLotto
         public int MaxNumber { get; set; }
         public int NumberOfRounds { get; set; }
         public bool HasRollup { get; set; }
-        public decimal Multiplier { get; set; }
 
-        public GameOption(int id, string name, int max, int rounds, bool rollup, decimal mult)
+        public GameOption(int id, string name, int max, int rounds, bool rollup)
         {
             Id = id;
             Name = name;
             MaxNumber = max;
             NumberOfRounds = rounds;
             HasRollup = rollup;
-            Multiplier = mult;
         }
     }
 
@@ -33,31 +31,90 @@ namespace PremierLotto
         public bool HasRollup { get; private set; }
         public bool IsAlphanumeric { get; private set; }
         public string ModeName { get; private set; }
-        public decimal Multiplier { get; private set; } 
 
         public static List<GameOption> AvailableGames = new List<GameOption>
         {
-            new GameOption(1, "Easy", 30, 5, false, 1.5m),
-            new GameOption(2, "Classic", 60, 3, true, 3.0m),
-            new GameOption(3, "Pro", 90, 1, true, 10.0m)
+            new GameOption(1, "Easy", 30, 2, false),
+            new GameOption(2, "Classic", 60, 3, true),
+            new GameOption(3, "Pro", 90, 5, true)
         };
 
-        public GameSettings(GameOption selectedOption, bool useDuplicates, bool useAlphanumeric)
+        public GameSettings(GameOption selectedOption)
         {
             ModeName = selectedOption.Name;
             MaxNumber = selectedOption.MaxNumber;
             NumberOfRounds = selectedOption.NumberOfRounds;
             HasRollup = selectedOption.HasRollup;
-            Multiplier = selectedOption.Multiplier;
+            
+            if (ModeName == "Easy")
+            {
+                AllowDuplicates = true;
+                IsAlphanumeric = false;
+            }
+            else if (ModeName == "Classic")
+            {
+                AllowDuplicates = false;
+                IsAlphanumeric = false;
+            }
+            else if (ModeName == "Pro")
+            {
+                AllowDuplicates = false;
+                IsAlphanumeric = true;
+            }
 
-            AllowDuplicates = useDuplicates;
-            IsAlphanumeric = useAlphanumeric;
+            ShowLevelRequirements();
+        }
 
-            string duplicateStatus = AllowDuplicates ? "Duplicates Enabled" : "Unique Numbers Only";
-            string typeStatus = IsAlphanumeric ? "Alphanumeric" : "Numeric Only";
+        private void ShowLevelRequirements()
+        {
+            Console.Clear();
 
-            Console.WriteLine($"\n--- Configuration: {ModeName} Mode ---");
-            Console.WriteLine($"[{typeStatus}] | [{duplicateStatus}] | [{NumberOfRounds} Rounds] | [{Multiplier}x Multiplier]");
+            "┌────────────────────────────────────────────────────────┐".WriteCentered(ConsoleColor.Cyan);
+            "│              ► PREMIER LOTTO SYSTEM CONFIG ◄           │".WriteCentered(ConsoleColor.Cyan);
+            "└────────────────────────────────────────────────────────┘".WriteCentered(ConsoleColor.Cyan);
+
+            Console.WriteLine();
+            $"MODE SELECTION: » {ModeName.ToUpper()} «".WriteCentered(ConsoleColor.White);
+            Console.WriteLine();
+
+            "┌────────────────────────────────────────────────────────┐".WriteCentered(ConsoleColor.DarkGray);
+
+            if (ModeName == "Easy")
+            {
+                "│  TICKET TYPE   :  Numeric Only                         │".WriteCentered(ConsoleColor.White);
+                "│  VALUE RANGE   :  0 to 30                              │".WriteCentered(ConsoleColor.White);
+                "│  GAME LENGTH   :  2 Full Rounds                        │".WriteCentered(ConsoleColor.White);
+                "│  PASS TARGET   :  25% Match Needed                     │".WriteCentered(ConsoleColor.White);
+                "│  DUPLICATES    :  ALLOWED (Shared Pools)               │".WriteCentered(ConsoleColor.White);
+                "│  WIN MATRIX    :  MULTIPLE WINNERS ALLOWED             │".WriteCentered(ConsoleColor.White);
+            }
+            else if (ModeName == "Classic")
+            {
+                "│  TICKET TYPE   :  Numeric Only                         │".WriteCentered(ConsoleColor.White);
+                "│  VALUE RANGE   :  0 to 60                              │".WriteCentered(ConsoleColor.White);
+                "│  GAME LENGTH   :  3 Full Rounds                        │".WriteCentered(ConsoleColor.White);
+                "│  PASS TARGET   :  50% Match Needed                     │".WriteCentered(ConsoleColor.White);
+                "│  DUPLICATES    :  STRICTLY PROHIBITED                  │".WriteCentered(ConsoleColor.White);
+                "│  WIN MATRIX    :  SINGLE UNIQUE WINNER                 │".WriteCentered(ConsoleColor.White);
+            }
+            else if (ModeName == "Pro")
+            {
+                "│  TICKET TYPE   :  ALPHANUMERIC HARDCODED               │".WriteCentered(ConsoleColor.White);
+                "│  VALUE RANGE   :  0 to 90 + Letters A-Z                │".WriteCentered(ConsoleColor.White);
+                "│  GAME LENGTH   :  5 Full Rounds                        │".WriteCentered(ConsoleColor.White);
+                "│  PASS TARGET   :  75% Match Needed                     │".WriteCentered(ConsoleColor.White);
+                "│  DUPLICATES    :  STRICTLY PROHIBITED                  │".WriteCentered(ConsoleColor.White);
+                "│  WIN MATRIX    :  SINGLE UNIQUE WINNER                 │".WriteCentered(ConsoleColor.White);
+            }
+
+            "└────────────────────────────────────────────────────────┘".WriteCentered(ConsoleColor.DarkGray);
+
+            Console.WriteLine();
+            "======================================================".WriteCentered(ConsoleColor.Black);
+            "   » Press ANY KEY to load configuration & play...".WriteCentered(ConsoleColor.Green);
+            "======================================================".WriteCentered(ConsoleColor.Black);
+
+            Console.ReadKey();
         }
 
         public static GameOption ShowMenuAndSelect()
@@ -67,7 +124,7 @@ namespace PremierLotto
                 Console.WriteLine("\nSelect Risk Level:");
                 foreach (var game in AvailableGames)
                 {
-                    Console.WriteLine($"{game.Id}. {game.Name} ({game.Multiplier}x Multiplier)");
+                    Console.WriteLine($"{game.Id}. {game.Name} ");
                 }
 
                 if (int.TryParse(Console.ReadLine(), out int choice))
@@ -77,28 +134,7 @@ namespace PremierLotto
                 }
 
                 ("Invalid Selection. Try again.").WriteColored(ConsoleColor.Red);
-               
             }
-        }
-        public static bool GetDuplicatePreference()
-        {
-            Console.Write("\nEnable Duplicate Numbers in Guesses? (Y/N): ");
-            return Console.ReadLine()?.ToUpper() == "Y";
-        }
-        public static bool GetAlphanumericPreference(GameOption selectedOption)
-        {
-            bool allowAlpha = false;
-
-            if (selectedOption.Name == "Pro")
-            {
-                Console.Write("Activate Alphanumeric Mode (A1, B2...)? (Y/N): ");
-                allowAlpha = Console.ReadLine()?.ToUpper() == "Y";
-            }
-
-            return allowAlpha;
         }
     }
-
 }
-
-
