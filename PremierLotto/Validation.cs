@@ -1,8 +1,9 @@
-﻿using System;
+using PremierLotto.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PremierLotto
+namespace PremierLotto.Utilities
 {
     public class Validation
     {
