@@ -1,6 +1,8 @@
+using PremierLotto.Core;
+using PremierLotto.Data;
 using System;
 
-namespace PremierLotto
+namespace PremierLotto.Utilities
 {
     public class MenuManager
     {
