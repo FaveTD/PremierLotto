@@ -1,7 +1,10 @@
+using PremierLotto.Core;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
-namespace PremierLotto
+namespace PremierLotto.Utilities
 {
     public class InputHandler
     {
@@ -17,16 +20,15 @@ namespace PremierLotto
                     Console.WriteLine();
                     break;
                 }
-
                 else if (key.Key == ConsoleKey.Backspace)
                 {
                     if (sb.Length > 0)
                     {
+                        char lastChar = sb[sb.Length - 1];
                         sb.Remove(sb.Length - 1, 1);
                         Console.Write("\b \b");
                     }
                 }
-
                 else
                 {
                     char c = key.KeyChar;
@@ -39,45 +41,40 @@ namespace PremierLotto
                     else
                     {
                         Console.Write(c);
-
-                        Thread.Sleep(500);
-
-                        Console.Write("\b \b*");
+                        Thread.Sleep(500); 
+                        Console.Write("\b*"); 
                     }
                 }
             }
             return sb.ToString();
         }
+
         public List<string> GetConfirmedGuesses(Validation validator, GameSettings settings)
         {
             while (true)
             {
-                Console.WriteLine("\n[SECURE MODE] Type your 4 guesses (visible for 0.5s):");
-                string secretInput = GetMaskedInput(); 
+                Console.WriteLine("\nType your 4 guesses separated by spaces (visible for 0.5s):");
+                string secretInput = GetMaskedInput();
 
                 if (validator.TryParseGuesses(secretInput, settings, out List<string> valid))
                 {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("\n✅ Input Verified & Encrypted.");
-                    Console.ResetColor();
-
-                    Console.WriteLine("Press ENTER to lock these numbers, or any other key to restart...");
+                    ("\n✅ Input Verified & Encrypted.").WriteColored(ConsoleColor.Green);
+                    Console.WriteLine("Press ENTER to lock these numbers, or any other key to restart entry...");
 
                     if (Console.ReadKey(true).Key == ConsoleKey.Enter)
                     {
                         Console.WriteLine("🔒 Locked.");
                         Thread.Sleep(800);
-                        Console.Clear(); 
-                        return valid; 
+                        return valid;
                     }
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("⚠️ Invalid. Check range, duplicates, or ensure you entered 4 items.");
-                    Console.ResetColor();
+                    ("⚠️ Invalid. Check entry rules, duplicate limitations, or number bounds.").WriteColored(ConsoleColor.Red);
                     Thread.Sleep(1500);
                     Console.Clear();
+
+                    "RE-ENTERING MATRIX PARAMS".WriteCentered(ConsoleColor.DarkYellow);
                 }
             }
         }
