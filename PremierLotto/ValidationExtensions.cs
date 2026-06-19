@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PremierLotto
+namespace PremierLotto.Utilities
 {
     public static class ValidationExtensions
     {
