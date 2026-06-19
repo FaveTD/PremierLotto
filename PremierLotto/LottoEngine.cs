@@ -1,13 +1,12 @@
+using PremierLotto.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace PremierLotto
+namespace PremierLotto.Game
 {
     public class LottoEngine
     {
         public List<string> WinningNumbers { get; private set; }
-        public string GoldenBall { get; private set; }
 
         public LottoEngine(GameSettings settings)
         {
@@ -32,26 +31,6 @@ namespace PremierLotto
                 if (!WinningNumbers.Contains(ball))
                 {
                     WinningNumbers.Add(ball);
-                }
-            }
-
-            while (true)
-            {
-                string potentialGolden;
-                if (settings.IsAlphanumeric)
-                {
-                    char letter = (char)random.Next('A', 'Z' + 1);
-                    potentialGolden = $"{letter}{random.Next(0, settings.MaxNumber + 1)}";
-                }
-                else
-                {
-                    potentialGolden = random.Next(0, settings.MaxNumber + 1).ToString();
-                }
-
-                if (!WinningNumbers.Contains(potentialGolden))
-                {
-                    GoldenBall = potentialGolden;
-                    break;
                 }
             }
         }
