@@ -1,30 +1,33 @@
+using PremierLotto.Core;
+using PremierLotto.Models;
+using PremierLotto.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
-namespace PremierLotto
+namespace PremierLotto.Game
 {
     public class LeaderboardManager
     {
-
         public List<Player> GetSortedLeaderboard(List<Player> players)
         {
-            return players.OrderByDescending(p => p.CorrectMatches)
-                          .ThenByDescending(p => p.TotalWinnings)
+            return players.OrderByDescending(p => p.TotalWinnings) 
+                          .ThenByDescending(p => p.PlayerAlias)    
                           .ToList();
         }
 
         public void DisplayTable(List<Player> sortedPlayers)
         {
             Console.WriteLine("\n-------------------------------------------------------------");
-            Console.WriteLine(string.Format("{0,-15} | {1,-10} | {2,-10} | {3,-10}", "ALIAS", "MATCHES", "WINNINGS", "RANK"));
+            Console.WriteLine(string.Format("{0,-15} | {1,-15} | {2,-15}", "ALIAS", "STAKE LEVEL", "TOTAL WINNINGS"));
             Console.WriteLine("-------------------------------------------------------------");
 
             int rank = 1;
             foreach (var p in sortedPlayers)
             {
-                Console.WriteLine(string.Format("{0,-15} | {1,-10} | ₦{2,-9} | #{3}",
-                    p.PlayerAlias, p.CorrectMatches, p.TotalWinnings, rank++));
+                Console.WriteLine(string.Format("{0,-15} | ₦{1,-13:N2} | ₦{2,-13:N2} | #{3}",
+                    p.PlayerAlias, p.ActiveRoundStake, p.TotalWinnings, rank++));
             }
             Console.WriteLine("-------------------------------------------------------------");
         }
@@ -33,19 +36,26 @@ namespace PremierLotto
         {
             if (sortedPlayers.Count < 2) return new List<Player>();
 
-            int topScore = sortedPlayers[0].CorrectMatches;
+            decimal topWinnings = sortedPlayers[0].TotalWinnings;
 
-            return sortedPlayers.Where(p => p.CorrectMatches == topScore).ToList();
+            return sortedPlayers.Where(p => p.TotalWinnings == topWinnings).ToList();
         }
 
-        public void RunTieBreaker(List<Player> tiedPlayers, InputHandler input, Validation validator, GameSettings settings, MatchCheck checker)
+        public void RunTieBreaker(List<Player> tiedPlayers, GameSettings settings)
         {
             Console.WriteLine("\n--- SUDDEN DEATH: ROLLUP PROTOCOL ---");
 
             foreach (var p in tiedPlayers)
             {
-                Console.WriteLine($"\n{p.PlayerAlias}, enter your final tie-breaker guesses:");
-                p.Guesses = input.GetConfirmedGuesses(validator, settings);
+                Console.WriteLine($"\n{p.PlayerAlias}, enter your 4 final tie-breaker guesses:");
+
+                List<string> tieGuesses = new List<string>();
+                for (int g = 1; g <= 4; g++)
+                {
+                    Console.Write($"Prediction {g}: ");
+                    tieGuesses.Add(Console.ReadLine()?.Trim());
+                }
+                p.Guesses = tieGuesses;
             }
 
             LottoEngine tieDraw = new LottoEngine(settings);
@@ -53,11 +63,11 @@ namespace PremierLotto
 
             foreach (var p in tiedPlayers)
             {
-                int matches = checker.GetMatchCount(p.Guesses, tieDraw.WinningNumbers);
+                int matches = MatchCheck.CountMatches(p.Guesses, tieDraw.WinningNumbers);
                 Console.WriteLine($"{p.PlayerAlias} matched {matches} numbers.");
-                p.CorrectMatches += matches; 
             }
         }
+
         public void HandlePotentialTies(List<Player> sortedResults, GameSettings settings)
         {
             if (!settings.HasRollup)
@@ -72,13 +82,14 @@ namespace PremierLotto
                 "🚨 TIE DETECTED! INITIATING ROLLUP PROTOCOL...".WriteColored(ConsoleColor.Red);
                 Thread.Sleep(2000);
 
-                RunTieBreaker(tied, new InputHandler(), new Validation(), settings, new MatchCheck());
+                RunTieBreaker(tied, settings);
 
                 "--- FINAL STANDINGS AFTER SUDDEN DEATH ---".WriteCentered(ConsoleColor.Yellow);
                 var finalResults = GetSortedLeaderboard(sortedResults);
                 DisplayTable(finalResults);
             }
         }
+
         public void DisplayFinalResults(List<Player> players, GameSettings settings)
         {
             Console.Clear();
@@ -94,6 +105,5 @@ namespace PremierLotto
             "SESSION COMPLETE. LOGGING OUT.".WriteCentered(ConsoleColor.Yellow);
             Thread.Sleep(2000);
         }
-
     }
 }
