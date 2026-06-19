@@ -1,6 +1,7 @@
+using PremierLotto.FInance;
 using System;
 
-namespace PremierLotto
+namespace PremierLotto.Models
 {
     public class PlayerProfile
     {
@@ -15,19 +16,26 @@ namespace PremierLotto
         public DateTime FirstSeen { get; set; }
         public DateTime LastSeen { get; set; }
 
-        public PlayerProfile() { }
+        public Wallet Wallet { get; set; }
+
+        public PlayerProfile()
+        {
+            Wallet = new Wallet();
+        }
 
         public PlayerProfile(string name)
         {
             DisplayName = name;
             NormalizedName = name.Trim().ToLower();
-            LegalName = ""; 
+            LegalName = "";
             FirstSeen = DateTime.Now;
             LastSeen = DateTime.Now;
             TotalGamesPlayed = 0;
             TotalWins = 0;
             BestScore = 0;
             AverageScore = 0.0;
+            
+            Wallet = new Wallet();
         }
 
         public void UpdateStats(int roundScore, bool isWin)
