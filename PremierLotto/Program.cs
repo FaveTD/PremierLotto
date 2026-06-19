@@ -1,7 +1,11 @@
+using PremierLotto.Data;
+using PremierLotto.Game;
+using PremierLotto.Models;
+using PremierLotto.Utilities;
 using System;
 using System.Collections.Generic;
 
-namespace PremierLotto
+namespace PremierLotto.Core
 {
     internal class Program
     {
@@ -17,19 +21,15 @@ namespace PremierLotto
 
             GameOption selectedOption = MenuManager.ShowMainMenuAndSelect();
 
-            decimal userStake = GameStart.GetUserStake();
-            bool allowDupes = GameSettings.GetDuplicatePreference();
-            bool allowAlpha = GameSettings.GetAlphanumericPreference(selectedOption);
-
-            GameSettings settings = new GameSettings(selectedOption, allowDupes, allowAlpha);
+            GameSettings settings = new GameSettings(selectedOption);
 
             ProfileDataManager dataManager = new ProfileDataManager();
-
             Validation validator = new Validation();
             List<Player> playersList = new List<Player>();
+
             GameStart.RegisterAgents(validator, playersList, dataManager);
 
-            TournamentManager.RunTournament(playersList, settings, userStake);
+            TournamentManager.RunTournament(playersList, settings);
 
             dataManager.UpdateAndSave(playersList);
 
