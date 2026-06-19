@@ -1,9 +1,10 @@
+using PremierLotto.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
-namespace PremierLotto
+namespace PremierLotto.Data
 {
     public class ProfileDataManager
     {
@@ -37,16 +38,14 @@ namespace PremierLotto
             {
                 PlayerProfile existing = Database[key];
 
-                ($"\n[SYSTEM]: Welcome back, Agent {existing.DisplayName}!").WriteColored(ConsoleColor.Cyan);
-                
+
                 return existing;
             }
 
             PlayerProfile newProfile = new PlayerProfile(rawName);
             Database[key] = newProfile;
 
-            ($"\n[SYSTEM]: Fresh profile created for {rawName}.").WriteColored(ConsoleColor.Green);
-          
+
             return newProfile;
         }
 
