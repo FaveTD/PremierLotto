@@ -1,6 +1,6 @@
 using System;
 
-namespace PremierLotto
+namespace PremierLotto.Core
 {
     public class GameStateManager
     {
