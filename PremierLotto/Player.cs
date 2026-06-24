@@ -1,4 +1,4 @@
-using PremierLotto.FInance;
+using PremierLotto.Finance;
 using System;
 using System.Collections.Generic;
 
