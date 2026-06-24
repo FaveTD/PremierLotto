@@ -4,24 +4,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PremierLotto.FInance
+namespace PremierLotto.Finance
 {
-    public class PayoutCalc
+    public static class PayoutCalc 
     {
         public static void DistributeEasyPool(List<Player> winners, List<Player> activePlayers, decimal totalJackpotPool)
         {
-            Console.WriteLine("--- DISTRIBUTING JACKPOT (PROPORTIONAL SPLIT) ---");
+            Console.WriteLine("\n--- DISTRIBUTING JACKPOT ---");
 
             decimal sumOfWinningStakes = winners.Sum(p => p.ActiveRoundStake);
 
             foreach (var winner in winners)
             {
+                if (sumOfWinningStakes == 0) continue;
+
                 decimal proportionalShare = totalJackpotPool * (winner.ActiveRoundStake / sumOfWinningStakes);
                 proportionalShare = Math.Round(proportionalShare, 2);
 
                 winner.TotalWinnings = proportionalShare;
 
-                Console.WriteLine($"Agent {winner.PlayerAlias} won a share of ₦{proportionalShare:N2}!");
+                ($"Agent {winner.PlayerAlias} won a share of ₦{proportionalShare:N2}!").WriteColored(ConsoleColor.Green);
 
                 winner.Wallet.DepositWinnings(proportionalShare);
             }
@@ -29,7 +31,7 @@ namespace PremierLotto.FInance
 
         public static void AwardSingleJackpot(Player champion, decimal totalJackpotPool)
         {
-            Console.WriteLine("--- AWARDING JACKPOT TO CHAMPION ---");
+            Console.WriteLine("\n--- AWARDING JACKPOT TO CHAMPION ---");
 
             champion.TotalWinnings = totalJackpotPool;
 
@@ -38,7 +40,7 @@ namespace PremierLotto.FInance
             champion.Wallet.DepositWinnings(totalJackpotPool);
         }
 
-        public decimal CalculateAccuracyWeight(int matches)
+        public static decimal CalculateAccuracyWeight(int matches) 
         {
             if (matches <= 0) return 0.00m;
             return matches / 4.0m;
