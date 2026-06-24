@@ -99,13 +99,13 @@ namespace PremierLotto.Data
 
             if (personalBestLog != null && personalBestLog.Record.WinningsClaimed > 0)
             { 
-                ("\n=======================================").WriteCentered(ConsoleColor.Yellow);
-                ($"⭐ PERSONAL BEST TOURNAMENT RECORD ⭐").WriteCentered(ConsoleColor.Yellow);
-                ($"Game ID:       {personalBestLog.Log.GameId} ({personalBestLog.Log.Timestamp})").WriteCentered(ConsoleColor.Yellow);
-                ($"Mode Chosen:   {personalBestLog.Log.GameMode}").WriteCentered(ConsoleColor.Yellow);
-                ($"Total Wins:    {personalBestLog.Record.MatchesCount} Round(s) Cleared").WriteCentered(ConsoleColor.Yellow);
-                ($"Prize Payout:  ₦{personalBestLog.Record.WinningsClaimed:N2}").WriteCentered(ConsoleColor.Yellow);
-                ("=======================================").WriteCentered(ConsoleColor.Yellow);
+                ("\n=======================================").WriteColored(ConsoleColor.Yellow);
+                ($"⭐ PERSONAL BEST TOURNAMENT RECORD ⭐").WriteColored(ConsoleColor.Yellow);
+                ($"Game ID:       {personalBestLog.Log.GameId} ({personalBestLog.Log.Timestamp})").WriteColored(ConsoleColor.Yellow);
+                ($"Mode Chosen:   {personalBestLog.Log.GameMode}").WriteColored(ConsoleColor.Yellow);
+                ($"Total Wins:    {personalBestLog.Record.MatchesCount} Round(s) Cleared").WriteColored(ConsoleColor.Yellow);
+                ($"Prize Payout:  ₦{personalBestLog.Record.WinningsClaimed:N2}").WriteColored(ConsoleColor.Yellow);
+                ("=======================================").WriteColoredd(ConsoleColor.Yellow);
                 
             }
 
