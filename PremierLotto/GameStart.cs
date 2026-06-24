@@ -23,7 +23,7 @@ namespace PremierLotto.Core
             {
                 Console.Clear();
                 "***************************************".WriteCentered(ConsoleColor.Yellow);
-                "** AGENT TERMINAL LOGIN              **".WriteCentered(ConsoleColor.Yellow);
+                "**        AGENT TERMINAL LOGIN       **".WriteCentered(ConsoleColor.Yellow);
                 "***************************************".WriteCentered(ConsoleColor.Yellow);
 
                 Console.WriteLine($"\n--- Registering Agent {i} of {totalPlayers} ---");
