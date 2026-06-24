@@ -1,229 +1,193 @@
 using PremierLotto.Core;
-using PremierLotto.FInance;
+using PremierLotto.Finance;
 using PremierLotto.Models;
 using PremierLotto.Utilities;
+using PremierLotto.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace PremierLotto.Game
 {
     public static class TournamentManager
     {
-        public static void RunTournament(List<Player> players, GameSettings settings)
+        public static void RunTournament(List<Player> players, GameSettings settings, PoolManager poolManager)
         {
+            FinanceManager finance = new FinanceManager();
+
             Console.Clear();
             "┌────────────────────────────────────────────────────────┐".WriteCentered(ConsoleColor.Cyan);
             "│              ► TOURNAMENT INITIALIZATION ◄             │".WriteCentered(ConsoleColor.Cyan);
             "└────────────────────────────────────────────────────────┘".WriteCentered(ConsoleColor.Cyan);
 
-            decimal totalJackpotPool = 0;
             Dictionary<Player, int> winTracker = new Dictionary<Player, int>();
+            List<Player> activePlayers = new List<Player>();
+            InputHandler input = new InputHandler();
+            Validation validator = new Validation();
 
-            Console.WriteLine("\nAgents, initialize entry configuration protocols:\n");
+            LeaderboardManager leaderboard = new LeaderboardManager();
+
+            foreach (var p in players) p.TotalWinnings = 0;
+
             foreach (var player in players)
             {
+                Console.Clear();
                 Console.WriteLine($"--- Agent {player.PlayerAlias} ---");
-                decimal validatedBaseStake = player.Wallet.ProcessRoundStake();
+                decimal userStake = input.GetValidatedStake(player);
 
-                if (validatedBaseStake <= 0)
+                if (poolManager.ProcessStake(userStake, player.Wallet))
                 {
-                    player.ActiveRoundStake = 0;
-                    continue;
+                    player.ActiveRoundStake = userStake;
+                    activePlayers.Add(player);
+                    winTracker[player] = 0;
+
+                    finance.LogTransaction("Debit", player.PlayerAlias, userStake, "Tournament Entry Stake");
+
+                    Console.WriteLine($"✅ Stake of ₦{userStake:N2} processed. (10% House Fee deducted).");
                 }
-
-                player.ActiveRoundStake = validatedBaseStake;
-                totalJackpotPool += validatedBaseStake;
-                winTracker[player] = 0;
-                Console.WriteLine();
+                else
+                {
+                    Console.WriteLine("❌ Entry denied: Insufficient funds.");
+                }
+                Console.ReadKey();
             }
-
-            var activePlayers = players.Where(p => p.ActiveRoundStake > 0).ToList();
 
             if (activePlayers.Count < 1)
             {
-                "❌ Aborting Tournament: Not enough qualified players with active stakes.".WriteColored(ConsoleColor.Red);
-                Console.ReadKey();
+                "❌ Aborting Tournament: No players qualified.".WriteColored(ConsoleColor.Red);
+                while (Console.KeyAvailable) Console.ReadKey(true);
+                Console.ReadKey(true);
                 return;
             }
 
             " 🔒 All agent initialization stakes compiled and locked.".WriteColored(ConsoleColor.Yellow);
-            "Press ANY KEY to launch the tournament rounds...".WriteColored(ConsoleColor.DarkGray);
-            Console.ReadKey();
+            while (Console.KeyAvailable) Console.ReadKey(true);
+            Console.ReadKey(true);
 
-            InputHandler input = new InputHandler();
-            Validation validator = new Validation();
-
-            int totalRounds = settings.NumberOfRounds;
-            for (int round = 1; round <= totalRounds; round++)
+            for (int round = 1; round <= settings.NumberOfRounds; round++)
             {
-                for (int i = 0; i < activePlayers.Count; i++)
+                Dictionary<Player, int> roundMatches = new Dictionary<Player, int>();
+                foreach (var player in activePlayers)
                 {
-                    var player = activePlayers[i];
                     Console.Clear();
-                    $"============ ROUND {round} OF {totalRounds} ============".WriteCentered(ConsoleColor.Yellow);
+                    $"============ ROUND {round} OF {settings.NumberOfRounds} ============".WriteCentered(ConsoleColor.Yellow);
                     Console.WriteLine($"\n--- Agent {player.PlayerAlias}'s Turn ---");
-
                     player.Guesses = input.GetConfirmedGuesses(validator, settings);
                 }
 
                 Console.Clear();
-                "┌────────────────────────────────────────────────────────┐".WriteCentered(ConsoleColor.Cyan);
-                "│               ► SYSTEM DRAW INITIATED ◄                │".WriteCentered(ConsoleColor.Cyan);
-                "└────────────────────────────────────────────────────────┘".WriteCentered(ConsoleColor.Cyan);
-
+                "► SYSTEM DRAW INITIATED ◄".WriteCentered(ConsoleColor.Cyan);
                 LottoEngine roundEngine = new LottoEngine(settings);
                 List<string> winningNumbers = roundEngine.WinningNumbers;
-
-                Console.WriteLine("\n------------------------------------------------");
-                Console.Write("⚡ SYSTEM DRAW COMPLETE | Round Winning Matrix: ");
-                Console.WriteLine(string.Join(" | ", winningNumbers));
-                Console.WriteLine("------------------------------------------------\n");
-
-                Dictionary<Player, int> successfulRoundMatches = new Dictionary<Player, int>();
+                Console.WriteLine($"\n⚡ DRAW: {string.Join(" | ", winningNumbers)}\n");
 
                 foreach (var player in activePlayers)
                 {
                     int matches = MatchCheck.CountMatches(player.Guesses, winningNumbers);
-                    bool passedThreshold = MatchCheck.EvaluatePassTarget(matches, settings);
-
-                    if (passedThreshold)
-                    {
-                        $"✨ Threshold Passed! Agent {player.PlayerAlias} matched {matches} ball(s).".WriteColored(ConsoleColor.Green);
-                        successfulRoundMatches[player] = matches;
-                    }
-                    else
-                    {
-                        $"❌ Threshold Failed for Agent {player.PlayerAlias} ({matches} match(es)).".WriteColored(ConsoleColor.DarkGray);
-                    }
+                    roundMatches[player] = matches;
+                    if (matches > 0) $"Agent {player.PlayerAlias} you have {matches} match(es)".WriteColored(ConsoleColor.Green);
+                    else "Oof...sorry. Try again in the next round".WriteColored(ConsoleColor.DarkGray);
                 }
 
-                if (successfulRoundMatches.Count > 0)
+                int maxRoundMatches = roundMatches.Values.Max();
+                if (maxRoundMatches > 0)
                 {
-                    int maxRoundMatches = successfulRoundMatches.Values.Max();
-                    var roundWinners = successfulRoundMatches.Where(x => x.Value == maxRoundMatches).Select(x => x.Key).ToList();
-
-                    Console.WriteLine();
-                    if (roundWinners.Count > 1)
-                    {
-                        string tieNames = string.Join(" and ", roundWinners.Select(w => $"Agent {w.PlayerAlias}"));
-                        $"🤝 TIE ROUND! {tieNames} won Round {round}!".WriteColored(ConsoleColor.Yellow);
-                    }
-                    else
-                    {
-                        $"🏆 Agent {roundWinners[0].PlayerAlias} won Round {round}!".WriteColored(ConsoleColor.Cyan);
-                    }
-
-                    foreach (var winner in roundWinners)
-                    {
-                        winTracker[winner]++;
-                    }
+                    var roundLeaders = roundMatches.Where(x => x.Value == maxRoundMatches).Select(x => x.Key).ToList();
+                    foreach (var leader in roundLeaders) winTracker[leader]++;
+                    if (roundLeaders.Count > 1) "🤝 Tie detected!".WriteColored(ConsoleColor.Yellow);
+                    else $"🏆 {roundLeaders[0].PlayerAlias} led the round!".WriteColored(ConsoleColor.Cyan);
                 }
-                else
-                {
-                    Console.WriteLine("\n🚫 No agents managed to pass the matrix threshold this round.");
-                }
+                else "🚫 No one matched any balls this round.".WriteColored(ConsoleColor.DarkGray);
 
-                Console.WriteLine("\nPress ANY KEY to advance the tournament sequence...");
-                Console.ReadKey();
+                Console.WriteLine("\nPress ANY KEY to continue...");
+                while (Console.KeyAvailable) Console.ReadKey(true);
+                Console.ReadKey(true);
             }
 
-            Console.Clear();
-            "┌────────────────────────────────────────────────────────┐".WriteCentered(ConsoleColor.Cyan);
-            "│               ► FINAL TOURNAMENT SCORECARD ◄           │".WriteCentered(ConsoleColor.Cyan);
-            "└────────────────────────────────────────────────────────┘".WriteCentered(ConsoleColor.Cyan);
+            leaderboard.DisplayTable(activePlayers, winTracker);
 
-            "┌────────────────────────┬───────────────────────────────┐".WriteCentered(ConsoleColor.DarkGray);
-            "│ AGENT ALIAS            │ TOTAL ROUND WINS              │".WriteCentered(ConsoleColor.DarkGray);
-            "├────────────────────────┼───────────────────────────────┤".WriteCentered(ConsoleColor.DarkGray);
-
-            foreach (var player in activePlayers)
-            {
-                int score = winTracker.ContainsKey(player) ? winTracker[player] : 0;
-                string row = $"│ {player.PlayerAlias,-22} │ {score,-29} │";
-                row.WriteCentered(ConsoleColor.White);
-            }
-            "└────────────────────────┴───────────────────────────────┘".WriteCentered(ConsoleColor.DarkGray);
-
-            Console.WriteLine($"\nTotal Prize Jackpot Pool: ₦{totalJackpotPool:N2}\n");
-
+            decimal totalJackpotPool = poolManager.GetCurrentPool();
             int maxWins = winTracker.Values.Max();
 
             if (maxWins == 0)
             {
-                "🚫 No rounds were won by any agent! The system pool rolls up.".WriteColored(ConsoleColor.Yellow);
-                Console.ReadKey();
-                return;
-            }
-
-            List<Player> tournamentWinners = winTracker.Where(x => x.Value == maxWins).Select(x => x.Key).ToList();
-
-            if (settings.ModeName == "Easy")
-            {
-                PayoutCalc.DistributeEasyPool(tournamentWinners, activePlayers, totalJackpotPool);
+                Console.Clear();
+                "====================================================".WriteCentered(ConsoleColor.Yellow);
+                "          ► JACKPOT ACCUMULATION PROTOCOL ◄         ".WriteCentered(ConsoleColor.Cyan);
+                "====================================================".WriteCentered(ConsoleColor.Yellow);
+                Console.WriteLine("\nNo players reached the success threshold in this session.");
+                Console.WriteLine("The current jackpot has been carried forward to the next tournament.");
+                Console.WriteLine($"\nCarried Pool Balance: ₦{totalJackpotPool:N2}");
             }
             else
             {
-                if (tournamentWinners.Count > 1)
+                List<Player> winners = winTracker.Where(x => x.Value == maxWins).Select(x => x.Key).ToList();
+
+                if (settings.ModeName != "Easy" && winners.Count > 1)
                 {
-                    "⚡ TIE DETECTED IN OVERALL SCORE! Initiating Sudden Death Protocol...".WriteColored(ConsoleColor.Red);
-                    Player singleChampion = RunSuddenDeath(tournamentWinners, settings, input, validator);
+                    "⚡ TIE DETECTED! Sudden Death initiated...".WriteColored(ConsoleColor.Red);
+                    Player singleChampion = RunSuddenDeath(winners, settings, input, validator);
                     PayoutCalc.AwardSingleJackpot(singleChampion, totalJackpotPool);
+
+                    finance.LogTransaction("Credit", singleChampion.PlayerAlias, totalJackpotPool, "Sudden Death Payout");
                 }
                 else
                 {
-                    PayoutCalc.AwardSingleJackpot(tournamentWinners[0], totalJackpotPool);
+                    PayoutCalc.DistributeEasyPool(winners, activePlayers, totalJackpotPool);
+
+                    foreach (var winner in winners)
+                    {
+                        finance.LogTransaction("Credit", winner.PlayerAlias, winner.TotalWinnings, "Tournament Payout");
+                    }
                 }
+
+                HistoryManager history = new HistoryManager();
+                history.AppendTournamentLog(settings.ModeName, totalJackpotPool, activePlayers, winTracker);
+
+                poolManager.ResetPool();
             }
 
-            Console.WriteLine("\nPress ANY KEY to exit session debrief and save log files...");
-            Console.ReadKey();
+            Console.WriteLine("\nPress ANY KEY to exit...");
+            while (Console.KeyAvailable) Console.ReadKey(true);
+            Console.ReadKey(true);
         }
 
         private static Player RunSuddenDeath(List<Player> tiedPlayers, GameSettings settings, InputHandler input, Validation validator)
         {
-            while (true)
-            {
-                Console.Clear();
-                "--- SUDDEN DEATH ELIMINATION ROUND ---".WriteCentered(ConsoleColor.Red);
-                Dictionary<Player, int> suddenDeathScores = new Dictionary<Player, int>();
+            List<Player> currentCandidates = new List<Player>(tiedPlayers);
 
-                foreach (var player in tiedPlayers)
+            while (currentCandidates.Count > 1)
+            {
+                Console.WriteLine($"\n⚡{currentCandidates.Count} players are still tied. Another round required!");
+
+                Dictionary<Player, int> roundScores = new Dictionary<Player, int>();
+
+                foreach (var player in currentCandidates)
                 {
-                    Console.WriteLine($"\n--- Agent {player.PlayerAlias}'s Sudden Death Guess ---");
+                    Console.WriteLine($"\n--- {player.PlayerAlias}: Sudden Death Round ---");
                     player.Guesses = input.GetConfirmedGuesses(validator, settings);
                 }
 
-                LottoEngine suddenEngine = new LottoEngine(settings);
-                List<string> winningNumbers = suddenEngine.WinningNumbers;
+                LottoEngine engine = new LottoEngine(settings);
+                List<string> winningNumbers = engine.WinningNumbers;
+                Console.WriteLine($"\n⚡ Draw: {string.Join(" | ", winningNumbers)}");
 
-                Console.Clear();
-                "--- SUDDEN DEATH DRAW RESULTS ---".WriteCentered(ConsoleColor.Red);
-                Console.WriteLine("\n------------------------------------------------");
-                Console.Write("⚡ SUDDEN DEATH DRAW: ");
-                Console.WriteLine(string.Join(" | ", winningNumbers));
-                Console.WriteLine("------------------------------------------------\n");
-
-                foreach (var player in tiedPlayers)
+                int maxMatches = 0;
+                foreach (var player in currentCandidates)
                 {
                     int matches = MatchCheck.CountMatches(player.Guesses, winningNumbers);
-                    Console.WriteLine($"Agent {player.PlayerAlias} achieved {matches} match(es).");
-                    suddenDeathScores[player] = matches;
+                    roundScores[player] = matches;
+                    if (matches > maxMatches) maxMatches = matches;
+                    Console.WriteLine($"{player.PlayerAlias} scored {matches} match(es).");
                 }
 
-                int highestScore = suddenDeathScores.Values.Max();
-                var champions = suddenDeathScores.Where(x => x.Value == highestScore).Select(x => x.Key).ToList();
-
-                if (champions.Count == 1)
-                {
-                    $"🏆 Tie Broken! Champion is Agent {champions[0].PlayerAlias}!".WriteColored(ConsoleColor.Green);
-                    return champions[0];
-                }
-
-                "Still tied! Re-rolling sudden death matrix...".WriteColored(ConsoleColor.Yellow);
-                Console.ReadKey();
+                currentCandidates = roundScores.Where(x => x.Value == maxMatches)
+                                               .Select(x => x.Key)
+                                               .ToList();
             }
+
+            Console.WriteLine($"\n🏆 Sudden Death Champion: {currentCandidates[0].PlayerAlias}");
+            return currentCandidates[0];
         }
     }
 }
