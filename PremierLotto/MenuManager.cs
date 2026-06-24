@@ -15,7 +15,7 @@ namespace PremierLotto.Utilities
             {
                 Console.Clear();
                 "***************************************".WriteCentered(ConsoleColor.Yellow);
-                "** MAIN OPERATION TERMINAL     **".WriteCentered(ConsoleColor.Yellow);
+                "**      MAIN OPERATION TERMINAL      **".WriteCentered(ConsoleColor.Yellow);
                 "***************************************".WriteCentered(ConsoleColor.Yellow);
                 Console.WriteLine("\nSelect an Operation:");
                 Console.WriteLine("1. Play Game");
