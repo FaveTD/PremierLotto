@@ -105,7 +105,7 @@ namespace PremierLotto.Data
                 ($"Mode Chosen:   {personalBestLog.Log.GameMode}").WriteColored(ConsoleColor.Yellow);
                 ($"Total Wins:    {personalBestLog.Record.MatchesCount} Round(s) Cleared").WriteColored(ConsoleColor.Yellow);
                 ($"Prize Payout:  ₦{personalBestLog.Record.WinningsClaimed:N2}").WriteColored(ConsoleColor.Yellow);
-                ("=======================================").WriteColoredd(ConsoleColor.Yellow);
+                ("=======================================").WriteColored(ConsoleColor.Yellow);
                 
             }
 
