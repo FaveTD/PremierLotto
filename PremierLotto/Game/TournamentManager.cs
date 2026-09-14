@@ -124,7 +124,6 @@ namespace PremierLotto.Game
                 "          ► JACKPOT ACCUMULATION PROTOCOL ◄         ".WriteCentered(ConsoleColor.Cyan);
                 "====================================================".WriteCentered(ConsoleColor.Yellow);
                 Console.WriteLine("\nNo players reached the success threshold in this session.");
-                //poolManager.SaveJackpot();
                 rolloverManager.AddToRollover(settings.Level.ToString(), totalJackpotPool);
                 Console.WriteLine($"\nThis jackpot has been carried forward into the next {settings.Level.ToString()} game.");
                 Console.WriteLine($"\nCarried Pool Balance: ₦{rolloverManager.GetCurrentRollover(settings.Level.ToString()):N2}");
