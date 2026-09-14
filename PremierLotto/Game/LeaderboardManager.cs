@@ -15,7 +15,7 @@ namespace PremierLotto.Game
             "                   TOURNAMENT LEADERBOARD                   ".WriteCentered(ConsoleColor.Cyan);
             "============================================================".WriteCentered(ConsoleColor.Cyan);
 
-            // Clean header: Just Alias, Stake, and Wins
+            
             Console.WriteLine($"{"ALIAS",-15} | {"STAKE",-12} | {"WINS",-6}");
             Console.WriteLine("------------------------------------------------------------");
 
@@ -28,7 +28,7 @@ namespace PremierLotto.Game
             }
             Console.WriteLine("------------------------------------------------------------");
 
-            // Adding a pause so the user sees the board before the payouts print below it
+            
             Console.WriteLine("\nPress ANY KEY to see payout details...");
             Console.ReadKey(true);
             Console.WriteLine();
